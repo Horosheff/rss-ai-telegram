@@ -4,8 +4,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 branch="$(git branch --show-current)"
-if [[ -n "$branch" ]]; then
-  git pull --ff-only origin "$branch"
+if [[ -n "$branch" ]] && git rev-parse "@{u}" >/dev/null 2>&1; then
+  git pull --ff-only
 fi
 
 python3 -m news_bot -q
