@@ -15,8 +15,10 @@ def _p(name: str, default: str) -> Path:
     return Path(os.getenv(name, default)).expanduser().resolve()
 
 
+DEFAULT_TELEGRAM_CHAT_ID = "449374770"
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+TELEGRAM_CHAT_ID = (os.getenv("TELEGRAM_CHAT_ID") or DEFAULT_TELEGRAM_CHAT_ID).strip()
 
 PIPELINE_DRY_RUN = _b("PIPELINE_DRY_RUN", "false")
 

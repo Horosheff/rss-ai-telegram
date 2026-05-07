@@ -1,11 +1,11 @@
 """
-Суб-агент «оформление»: пост в Telegram HTML без внешних моделей (только html.escape).
+Суб-агент «оформление»: пост в Telegram HTML без внешних моделей.
 См. https://core.telegram.org/bots/api#html-style
 """
 
 from __future__ import annotations
 
-from html import escape
+from html import escape, unescape
 from typing import Any
 
 
@@ -16,23 +16,20 @@ class FormatAgent:
         *,
         reference_time_utc: str,
     ) -> str:
-        title = str(getattr(item, "title", "") or "").strip()
-        summary = str(getattr(item, "summary", "") or "").strip()
+        title = self._clean_text(getattr(item, "title", ""))
+        summary = self._clean_text(getattr(item, "summary", ""))
         url = str(getattr(item, "url", "") or "").strip()
-        pub = getattr(item, "published_hint", None)
+        pub = self._clean_text(getattr(item, "published_hint", "") or "")
 
-        summary = " ".join(summary.split())[:2000]
+        summary = summary[:2000]
         lines: list[str] = [
             f"<b>{escape(title)}</b>",
             "",
             escape(summary) if summary else escape("—"),
-            "",
         ]
 
-        meta = f"UTC: {reference_time_utc}"
         if pub:
-            meta = f"{meta} · {pub}"
-        lines.append(f"<i>{escape(meta)}</i>")
+            lines.extend(["", f"<i>{escape(f'Опубликовано: {pub}')}</i>"])
 
         if url.startswith(("http://", "https://")):
             lines.extend(
@@ -43,6 +40,10 @@ class FormatAgent:
 
         text = "\n".join(lines).strip()
         return self._enforce_length(text, limit=3900)
+
+    @staticmethod
+    def _clean_text(value: Any) -> str:
+        return " ".join(unescape(str(value or "")).strip().split())
 
     @staticmethod
     def _enforce_length(text: str, *, limit: int) -> str:
