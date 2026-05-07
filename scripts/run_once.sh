@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 branch="$(git branch --show-current)"
-if [[ -n "$branch" ]]; then
+if [[ -n "$branch" ]] && git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
   git pull --ff-only origin "$branch"
 fi
 
