@@ -24,6 +24,7 @@ PIPELINE_DRY_RUN = _b("PIPELINE_DRY_RUN", "false")
 TRANSLATE_TO_RUSSIAN = _b("TRANSLATE_TO_RUSSIAN", "true")
 
 DATABASE_PATH = _p("DATABASE_PATH", "data/posted_news.sqlite3")
+POSTED_NEWS_STATE_PATH = _p("POSTED_NEWS_STATE_PATH", "state/posted_news.tsv")
 
 # Встроенные RSS: ИИ / нейросети / ML (без переменных окружения)
 RSS_FEEDS: list[str] = [

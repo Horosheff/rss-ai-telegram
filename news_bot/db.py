@@ -1,4 +1,4 @@
-"""SQLite-хранилище уже опубликованных новостей (URL + хэш заголовка)."""
+"""Хранилище уже опубликованных новостей (URL + хэш заголовка)."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ import sqlite3
 import time
 from pathlib import Path
 from contextlib import contextmanager
+
+from news_bot.config import POSTED_NEWS_STATE_PATH
 
 
 def _title_fingerprint(title: str) -> str:
@@ -35,7 +37,9 @@ def normalize_url(url: str) -> str:
 class PostedNewsDB:
     def __init__(self, path: Path) -> None:
         self._path = path
+        self._state_path = POSTED_NEWS_STATE_PATH
         path.parent.mkdir(parents=True, exist_ok=True)
+        self._state_path.parent.mkdir(parents=True, exist_ok=True)
 
     @contextmanager
     def _conn(self):
@@ -65,6 +69,7 @@ class PostedNewsDB:
             c.execute(
                 "CREATE INDEX IF NOT EXISTS idx_posted_title_fp ON posted_news(title_fp)"
             )
+        self._import_state_file()
 
     def exists(self, url: str, title: str) -> bool:
         un = normalize_url(url)
@@ -105,6 +110,71 @@ class PostedNewsDB:
                 """,
                 (un, fp, title, source or "", now, url),
             )
+        self._append_state_file(un, fp, title, source or "", now, url)
+
+    def _import_state_file(self) -> None:
+        if not self._state_path.exists():
+            self._state_path.write_text(
+                "url_norm\ttitle_fp\ttitle\tsource\tposted_at\traw_url\n",
+                encoding="utf-8",
+            )
+            return
+
+        rows: list[tuple[str, str, str, str, float, str]] = []
+        for line in self._state_path.read_text(encoding="utf-8").splitlines()[1:]:
+            parts = line.split("\t")
+            if len(parts) != 6:
+                continue
+            url_norm, title_fp, title, source, posted_at, raw_url = parts
+            try:
+                posted_at_float = float(posted_at)
+            except ValueError:
+                posted_at_float = 0.0
+            if url_norm or title_fp:
+                rows.append((url_norm, title_fp, title, source, posted_at_float, raw_url))
+
+        with self._conn() as c:
+            c.executemany(
+                """
+                INSERT OR IGNORE INTO posted_news
+                (url_norm, title_fp, title, source, posted_at, raw_url)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                rows,
+            )
+
+    def _append_state_file(
+        self,
+        url_norm: str,
+        title_fp: str,
+        title: str,
+        source: str,
+        posted_at: float,
+        raw_url: str,
+    ) -> None:
+        if self._state_contains(url_norm, title_fp):
+            return
+        line = "\t".join(
+            self._tsv(value)
+            for value in (url_norm, title_fp, title, source, f"{posted_at:.6f}", raw_url)
+        )
+        with self._state_path.open("a", encoding="utf-8") as f:
+            f.write(f"{line}\n")
+
+    def _state_contains(self, url_norm: str, title_fp: str) -> bool:
+        if not self._state_path.exists():
+            return False
+        for line in self._state_path.read_text(encoding="utf-8").splitlines()[1:]:
+            parts = line.split("\t")
+            if len(parts) != 6:
+                continue
+            if parts[0] == url_norm or parts[1] == title_fp:
+                return True
+        return False
+
+    @staticmethod
+    def _tsv(value: str) -> str:
+        return str(value or "").replace("\t", " ").replace("\n", " ").replace("\r", " ")
 
 
 def build_db(path: Path) -> PostedNewsDB:

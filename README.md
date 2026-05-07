@@ -10,7 +10,8 @@
 2. `TranslationAgent` — переводит заголовок и описание на русский язык.
 3. `FormatAgent` — собирает пост в **Telegram HTML** через `html.escape` ([документы Bot API](https://core.telegram.org/bots/api#html-style)).
 4. `posted_news` (SQLite) — не публикуем повтор по URL / отпечатку заголовка.
-5. Один «цикл» = одна новая публикация за запуск (если есть непубликованный кандидат).
+5. `state/posted_news.tsv` — постоянный список опубликованных URL для повторных Cloud-запусков.
+6. Один «цикл» = одна новая публикация за запуск (если есть непубликованный кандидат).
 
 Картинок нет; превью ссылок в Telegram отключено.
 
@@ -25,6 +26,7 @@
 | `PIPELINE_DRY_RUN` | `true` = только собрать текст, без отправки и без записи в БД |
 | `TRANSLATE_TO_RUSSIAN` | По умолчанию `true`; переводит заголовок и описание |
 | `DATABASE_PATH` | По умолчанию `data/posted_news.sqlite3` |
+| `POSTED_NEWS_STATE_PATH` | По умолчанию `state/posted_news.tsv`; хранит дедуп между запусками |
 
 Отдельных переменных для RSS нет — список лент меняется в коде (`RSS_FEEDS`).
 
@@ -41,6 +43,6 @@ pip install -r requirements.txt
 
 Интервал и триггеры (например, периодический запуск) задаются в [**Cursor Cloud Agents**](https://cursor.com/docs/cloud-agent) или вашем CI — не в этом репозитории.
 
-В Dashboard добавьте Secret `TELEGRAM_BOT_TOKEN`; команда запуска: `pip install -r requirements.txt && ./scripts/run_once.sh`. Репозиторий подключите к Cursor с GitHub.
+В Dashboard добавьте Secret `TELEGRAM_BOT_TOKEN`; команда запуска: `pip install -r requirements.txt && ./scripts/run_once.sh`. Скрипт сам коммитит и пушит `state/posted_news.tsv`, чтобы следующий запуск не повторял уже отправленную новость. Репозиторий подключите к Cursor с GitHub.
 
 Токен бота **не храните** в коде; `chat_id` — идентификатор чата/канала в Bot API для `sendMessage`.
