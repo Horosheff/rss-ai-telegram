@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 branch="$(git branch --show-current)"
-if [[ -n "$branch" ]]; then
+if [[ -n "$branch" ]] && [[ -n "$(git ls-remote --heads origin "$branch")" ]]; then
   git pull --ff-only origin "$branch"
 fi
 
