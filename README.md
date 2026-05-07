@@ -2,7 +2,7 @@
 
 Минимальный пайплайн без внешних «сетевых моделей» и без ключей к LLM: только **Telegram Bot API**, **встроенные RSS-ленты** в коде и **SQLite** для дедупликации.
 
-Подходит для запуска в [**Cursor Cloud Agents**](https://cursor.com/docs/cloud-agent): секреты (`TELEGRAM_BOT_TOKEN`, при необходимости `TELEGRAM_CHAT_ID`) задаются в [Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents), репозиторий — на GitHub/GitLab.
+Подходит для запуска в [**Cursor Cloud Agents**](https://cursor.com/docs/cloud-agent): секреты (`TELEGRAM_BOT_TOKEN`, при необходимости `TELEGRAM_CHAT_ID`) задаются в [Dashboard → Cloud Agents → Secrets](https://cursor.com/dashboard/cloud-agents), репозиторий — на GitHub/GitLab. Пошагово для облака: [`AGENTS.md`](AGENTS.md).
 
 ## Что внутри
 
