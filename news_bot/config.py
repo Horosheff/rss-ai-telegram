@@ -21,6 +21,7 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
 TELEGRAM_CHAT_ID = (os.getenv("TELEGRAM_CHAT_ID") or DEFAULT_TELEGRAM_CHAT_ID).strip()
 
 PIPELINE_DRY_RUN = _b("PIPELINE_DRY_RUN", "false")
+TRANSLATE_TO_RUSSIAN = _b("TRANSLATE_TO_RUSSIAN", "true")
 
 DATABASE_PATH = _p("DATABASE_PATH", "data/posted_news.sqlite3")
 

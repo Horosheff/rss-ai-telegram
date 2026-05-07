@@ -13,6 +13,7 @@ from news_bot.config import DATABASE_PATH
 from news_bot.db import build_db
 from news_bot.agents.format_agent import FormatAgent
 from news_bot.agents.research_agent import ResearchAgent
+from news_bot.agents.translation_agent import TranslationAgent
 from news_bot import telegram_send
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ logger = logging.getLogger(__name__)
 class Orchestrator:
     def __init__(self) -> None:
         self.research = ResearchAgent()
+        self.translator = TranslationAgent()
         self.formatter = FormatAgent()
         self._db = build_db(DATABASE_PATH)
 
@@ -45,8 +47,20 @@ class Orchestrator:
                 logger.debug("Skip duplicate: %s", item.url[:80])
                 continue
 
+            try:
+                publish_item = self.translator.translate_item(item) if config.TRANSLATE_TO_RUSSIAN else item
+            except Exception as e:
+                logger.exception("Translation failed: %s", e)
+                return {
+                    "ok": False,
+                    "action": "translation_failed",
+                    "error": str(e),
+                    "candidate": item.as_dict(),
+                    "ref": ref,
+                }
+
             html = self.formatter.to_telegram_html(
-                item,
+                publish_item,
                 reference_time_utc=ref,
             )
 
@@ -55,7 +69,7 @@ class Orchestrator:
                 return {
                     "ok": True,
                     "action": "dry_run",
-                    "item": item.as_dict(),
+                    "item": publish_item.as_dict(),
                     "html_preview": html[:900],
                     "ref": ref,
                 }
@@ -74,13 +88,13 @@ class Orchestrator:
 
             self._db.record(
                 item.url,
-                item.title,
+                publish_item.title,
                 source=item.source,
             )
             return {
                 "ok": True,
                 "action": "posted",
-                "item": item.as_dict(),
+                "item": publish_item.as_dict(),
                 "ref": ref,
             }
 
